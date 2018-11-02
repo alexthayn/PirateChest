@@ -9,16 +9,20 @@ namespace PirateChest_AThayn
     public class Program
     {
         public static int[,] pond;
+        public static int a;
+        public static int b;
+        public static int m;
+        public static int n;
 
         static void Main(string[] args)
         {
             Console.WriteLine("Please enter test input: ");
 
             //Get input dimensions
-            int a = Convert.ToInt32(Console.ReadLine());
-            int b = Convert.ToInt32(Console.ReadLine());
-            int m = Convert.ToInt32(Console.ReadLine());
-            int n = Convert.ToInt32(Console.ReadLine());
+            a = Convert.ToInt32(Console.ReadLine());
+            b = Convert.ToInt32(Console.ReadLine());
+            m = Convert.ToInt32(Console.ReadLine());
+            n = Convert.ToInt32(Console.ReadLine());
 
             pond = new int[m, n];
 
@@ -27,31 +31,45 @@ namespace PirateChest_AThayn
                 for (int j = 0; j < n; j++)
                     pond[i, j] = Convert.ToInt32(Console.ReadLine());
 
-            int result = MaxSizeOfPirateChest(a, b, m, n);
+            int result = MaxSizeOfPirateChest();
             Console.Write(result);
+            Console.ReadKey();
         }
             
 
-        public static int MaxSizeOfPirateChest(int a, int b, int m, int n)
+        public static int MaxSizeOfPirateChest()
         {
             int maxDepth = pond.Cast<int>().Max();
 
-            int volumeOfPond = GetVolumeOfPond(m,n);
-            
+            int volumeOfPond = GetVolumeOfPond();
+            int volumeWithChest = volumeOfPond;
             int maxSize = 0;
 
             //Check each layer for max size of chest starting at bottom of pond
             for(int i = maxDepth; i > 0; i--)
             {
-                int[,] currentLayer = GetLayerValues(i, m, n);
-                int maxWidth = 0;
-                int maxLength =0;
+                int[,] currentLayer = GetLayerValues(i);
+                int maxArea = FindMaxSizeOfChestInLayer(currentLayer);
+                int chestVolume = maxArea;
+                int chestHeight = 1;
+                int waterHeight = 0 + chestVolume/(m*n);
+                int topOfChest = -i + chestHeight;
+
+                //Increase size of the chest until it can't fit underwater anymore
+                do
+                {
+                    chestHeight++;
+                    topOfChest = waterHeight - i + chestHeight;
+                    waterHeight += waterHeight + chestVolume / (m * n);
+                }
+                while (topOfChest < waterHeight);
+                maxSize = (chestHeight - 1) * maxArea;
             }
             
             return maxSize;
         }
 
-        private static int GetVolumeOfPond(int m, int n)
+        private static int GetVolumeOfPond()
         {
             int volume = 0;
             for (int i = 0; i < m; i++)
@@ -60,7 +78,7 @@ namespace PirateChest_AThayn
             return volume;
         }
 
-        public static int[,] GetLayerValues(int depth, int m, int n)
+        public static int[,] GetLayerValues(int depth)
         {
             int[,] layer = new int[m, n];
             for (int i = 0; i < m; i++)
@@ -69,10 +87,11 @@ namespace PirateChest_AThayn
             return layer;
         }
 
-        public int FindMaxSizeOfChestInLayer(int[,] layer, int m, int n)
+        public static int FindMaxSizeOfChestInLayer(int[,] layer)
         {
-            int[] temp = new int[m];
+            int[] temp = new int[n];
             MaximumHistogram mh = new MaximumHistogram();
+            int areaBounds = m * n;
             int maxArea = 0;
             int area = 0;
             for (int i = 0; i < m; i++)
@@ -87,9 +106,11 @@ namespace PirateChest_AThayn
                     {
                         temp[j] += layer[i,j];
                     }
-                    area = mh.maxHistogram(temp);
+                    area = mh.maxHistogram(temp, a,b);
                     if (area > maxArea)
                     {
+                        if (area > areaBounds)
+                            maxArea = areaBounds;
                         maxArea = area;
                     }
                 }
